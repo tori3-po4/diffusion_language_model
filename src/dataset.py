@@ -27,7 +27,9 @@ class FineWebEduDataset(IterableDataset):
         self.shuffle_buffer = shuffle_buffer
         self.seed = seed
 
-        self.tokenizer = AutoTokenizer.from_pretrained("gpt2")
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            "gpt2", model_max_length=int(1e9)
+        )
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
     def __iter__(self):
