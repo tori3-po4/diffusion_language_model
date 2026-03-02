@@ -33,13 +33,18 @@ class FineWebEduDataset(IterableDataset):
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
     def __iter__(self):
+        worker_info = torch.utils.data.get_worker_info()
+        seed = self.seed
+        if worker_info is not None:
+            seed += worker_info.id
+
         ds = load_dataset(
             self.dataset_name,
             self.dataset_config,
             split="train",
             streaming=True,
         )
-        ds = ds.shuffle(seed=self.seed, buffer_size=self.shuffle_buffer)
+        ds = ds.shuffle(seed=seed, buffer_size=self.shuffle_buffer)
 
         buffer = []
         for example in ds:
@@ -80,5 +85,7 @@ def get_dataloader(
         dataset,
         batch_size=batch_size,
         collate_fn=collate_fn,
-        num_workers=0,
+        num_workers=num_workers,
+        pin_memory=True,
+        prefetch_factor=2 if num_workers > 0 else None,
     )

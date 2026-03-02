@@ -191,6 +191,7 @@ def main():
         seq_len=mc["seq_len"],
         batch_size=tc["batch_size"],
         shuffle_buffer=dc["shuffle_buffer"],
+        num_workers=dc.get("num_workers", 2),
         seed=tc["seed"],
     )
 
