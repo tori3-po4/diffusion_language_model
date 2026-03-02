@@ -252,8 +252,8 @@ def subs_parameterization(
 ) -> torch.Tensor:
     """SUBS parameterization: compute NLL only at [MASK] positions.
 
-    Memory-efficient version that avoids creating a full (B, S, V) one-hot tensor.
-    Returns per-position NLL of the true token, with 0 at non-masked positions.
+    Memory-efficient version: only computes cross-entropy at masked positions,
+    avoiding materializing a full (B, S, V) float32 tensor.
 
     Args:
         logits: Raw model output (B, S, V).
@@ -265,13 +265,19 @@ def subs_parameterization(
         nll: Per-position negative log-likelihood (B, S). Zero at non-masked positions.
     """
     is_mask = (xt == mask_token_id)  # (B, S)
+    B, S = xt.shape
 
-    # Compute log-softmax in float32 for numerical stability
-    log_probs = F.log_softmax(logits.float(), dim=-1)  # (B, S, V)
+    nll = torch.zeros(B, S, device=xt.device, dtype=torch.float32)
 
-    # Gather log-prob of the true token
-    true_log_probs = torch.gather(log_probs, -1, x0.unsqueeze(-1)).squeeze(-1)  # (B, S)
+    if is_mask.any():
+        # Extract logits/targets only at masked positions (much smaller than full B*S*V)
+        masked_logits = logits[is_mask]   # (num_masked, V)
+        masked_targets = x0[is_mask]      # (num_masked,)
 
-    # Zero out non-masked positions (SUBS: only masked positions contribute)
-    nll = -true_log_probs * is_mask.float()
+        # F.cross_entropy fuses softmax+gather internally, avoiding full softmax allocation
+        masked_nll = F.cross_entropy(
+            masked_logits.float(), masked_targets, reduction="none"
+        )
+        nll[is_mask] = masked_nll
+
     return nll

@@ -69,8 +69,9 @@ def compute_loss(
     # Forward diffusion
     xt = q_xt(x0, move_chance[:, None], mask_token_id)
 
-    # Model forward
-    logits = model(xt, sigma)
+    # Model forward (use autocast to keep logits in fp16, avoiding large fp32 allocation)
+    with torch.amp.autocast("cuda", dtype=torch.float16):
+        logits = model(xt, sigma)
 
     # SUBS parameterization: NLL at masked positions only (memory-efficient)
     nll = subs_parameterization(logits, xt, x0, mask_token_id)  # (B, S)
