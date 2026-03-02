@@ -206,13 +206,13 @@ def main():
     data_iter = iter(dataloader)
 
     progress_bar = tqdm(
-        range(tc["max_steps"]),
+        total=tc["max_steps"],
         desc="Training",
         disable=not accelerator.is_main_process,
     )
 
     model.train()
-    for _ in progress_bar:
+    while global_step < tc["max_steps"]:
         # Get batch
         try:
             x0 = next(data_iter)
@@ -239,6 +239,7 @@ def main():
 
         if accelerator.sync_gradients:
             global_step += 1
+            progress_bar.update(1)
             update_ema(ema_model, accelerator.unwrap_model(model), tc["ema_decay"])
 
             # Logging
@@ -262,9 +263,6 @@ def main():
                 accelerator.save_state(save_dir)
                 torch.save(ema_model.state_dict(), os.path.join(save_dir, "ema_model.pt"))
                 print(f"Saved checkpoint at step {global_step}")
-
-        if global_step >= tc["max_steps"]:
-            break
 
     # Final save
     if accelerator.is_main_process:
