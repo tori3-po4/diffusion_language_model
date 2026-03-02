@@ -7,7 +7,7 @@ import time
 import os
 import matplotlib
 if os.environ.get("COLAB_RELEASE_TAG"):
-    matplotlib.use("Agg")
+    matplotlib.use("module://matplotlib_inline.backend_inline")
 else:
     matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -60,6 +60,7 @@ def plot_once(csv_path: str, output_path: str, window: int = 10):
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     print(f"Saved plot to {output_path}")
+
     plt.show()
 
 
