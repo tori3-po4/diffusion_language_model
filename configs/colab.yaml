@@ -16,7 +16,7 @@ training:
   lr: 3.0e-4
   weight_decay: 0.01
   warmup_steps: 500
-  max_steps: 50000
+  max_steps: 70000
   batch_size: 16
   gradient_accumulation_steps: 8
   max_grad_norm: 1.0
