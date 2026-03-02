@@ -220,7 +220,13 @@ class DIT(nn.Module):
                     nn.init.zeros_(m.bias)
             elif isinstance(m, nn.Embedding):
                 nn.init.normal_(m.weight, std=0.02)
-        # Re-zero gate/output layers (already done in constructors, but be safe)
+        # Re-zero adaLN modulation layers (adaLN-Zero: gates must start at zero
+        # so each block acts as identity at initialization for stable training)
+        for block in self.blocks:
+            nn.init.zeros_(block.adaLN_modulation[1].weight)
+            nn.init.zeros_(block.adaLN_modulation[1].bias)
+        nn.init.zeros_(self.final_layer.adaLN_modulation[1].weight)
+        nn.init.zeros_(self.final_layer.adaLN_modulation[1].bias)
 
     def forward(self, indices: torch.Tensor, sigma: torch.Tensor) -> torch.Tensor:
         """
