@@ -4,8 +4,12 @@ import argparse
 import csv
 import time
 
+import os
 import matplotlib
-matplotlib.use("TkAgg")
+if os.environ.get("COLAB_RELEASE_TAG"):
+    matplotlib.use("Agg")
+else:
+    matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
 
